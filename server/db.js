@@ -13,6 +13,12 @@ const db = new sqlite3.Database('./pdf_data.db', (err) => {
       file_name TEXT NOT NULL,
       content BLOB NOT NULL
     );`)
+
+    db.run(`CREATE TABLE IF NOT EXISTS summaries (
+      id TEXT PRIMARY KEY,
+      summary TEXT,
+      chat_history TEXT
+    );`);
   }
 })
 

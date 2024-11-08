@@ -2,9 +2,10 @@ type ChatInputProps = {
     chatHistory: { user: string; assistant: string }[]
     onUpdateQuestion: (value: string) => void
     onSubmitQuestion: () => void
+    question: string | null
 }
 
-const ChatInput: React.FC<ChatInputProps> = ({chatHistory, onUpdateQuestion, onSubmitQuestion}) => {
+const ChatInput: React.FC<ChatInputProps> = ({chatHistory, onUpdateQuestion, onSubmitQuestion, question}) => {
     return (
         <div>
         <h3>Chat about this document</h3>
@@ -19,6 +20,7 @@ const ChatInput: React.FC<ChatInputProps> = ({chatHistory, onUpdateQuestion, onS
         <textarea
           onChange={(e) => onUpdateQuestion(e.target.value)}
           placeholder="Ask a question about the document"
+          value={question ?? ''}
         />
         <button onClick={onSubmitQuestion}>Ask</button>
       </div>

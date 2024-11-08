@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState } from 'react';
-import { saveFile } from '@/api/TextFile';
+import { saveFile } from '@/api/DB';
 
 type FileUploadProps = {
   onFileAdded: (id: string, name: string) => void;

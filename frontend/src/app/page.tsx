@@ -1,6 +1,6 @@
 'use client'
 
-import { getAllFiles } from "@/api/TextFile";
+import { getAllFiles } from "@/api/DB";
 import FileUpload from "@/components/FileUpload/FileUpload";
 import {UploadedFiles} from "@/components/UploadedFiles/UploadedFiles";
 import { useEffect, useState } from "react";

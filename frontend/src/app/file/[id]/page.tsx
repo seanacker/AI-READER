@@ -1,7 +1,7 @@
 'use client'
 
 import React, { use, useEffect, useState } from 'react';
-import { getFileById } from '@/api/TextFile';
+import { getFileById, getSummaryFromDB, saveSummaryToDB } from '@/api/DB';
 import PDFViewer from '@/components/PDFViewer/PDFViewer';
 import ChatWindow from '@/components/ChatWindow/ChatWindow';
 import * as pdfjsLib from 'pdfjs-dist';
@@ -32,7 +32,20 @@ const FileDisplay = ({ params }: FileDisplayProps) => {
       }
     };
 
+    const fetchSummary = async() => {
+      try {
+        const savedData = await getSummaryFromDB(id);
+        if (savedData) {
+          setSummary(savedData.summary);
+          setChatHistory(savedData.chatHistory);
+        }
+      } catch (error) {
+        console.error('Error fetching summary:', error)
+      }
+    }
+
     fetchPdf();
+    fetchSummary();
   }, [id]);
 
   const extractTextFromPDF = async (blob: Blob) => {
@@ -53,6 +66,7 @@ const FileDisplay = ({ params }: FileDisplayProps) => {
     try {
       const summaryText = await summarizeText(pdfText);
       setSummary(summaryText);
+      await saveSummaryToDB(id, summaryText, chatHistory);
     } catch (error) {
       console.error('Error generating summary:', error);
     }
@@ -60,15 +74,15 @@ const FileDisplay = ({ params }: FileDisplayProps) => {
 
   const handleQuestionSubmit = async () => {
     if (!question.trim()) return;
-    setChatHistory((prev) => [...prev, { user: question, assistant: '' }]);
-
+    const updatedChatHistory = [...chatHistory, { user: question, assistant: '' }];
+    
     try {
       const response = await askQuestionWithContext(question, summary ?? '', pdfText);
-      setChatHistory((prev) =>
-        prev.map((chat, index) =>
-          index === prev.length - 1 ? { ...chat, assistant: response } : chat
-        )
+      const updatedChatHistoryWithResponse = updatedChatHistory.map((chat, index) =>
+        index === updatedChatHistory.length - 1 ? { ...chat, assistant: response } : chat
       );
+      await saveSummaryToDB(id, summary ?? '', updatedChatHistoryWithResponse);
+      setChatHistory(updatedChatHistoryWithResponse)
     } catch (error) {
       console.error('Error asking question:', error);
     }
@@ -90,6 +104,7 @@ const FileDisplay = ({ params }: FileDisplayProps) => {
           onSubmitQuestion={handleQuestionSubmit}
           chatHistory={chatHistory}
           onUpdateQuestion={value => setQuestion(value)}
+          question={question}
         />}
     </div>
   );
