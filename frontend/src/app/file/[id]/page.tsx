@@ -1,16 +1,25 @@
 'use client'
 
-import React, { useEffect, useState } from 'react';
-import { getFileById, summarizeText } from '@/api/TextFile';
+import React, { use, useEffect, useState } from 'react';
+import { getFileById } from '@/api/TextFile';
 import PDFViewer from '@/components/PDFViewer/PDFViewer';
-import ChatWindow from '@/components/Chatwindow/Chatwindow';
+import ChatWindow from '@/components/ChatWindow/ChatWindow';
 import * as pdfjsLib from 'pdfjs-dist';
 import { TextItem } from 'pdfjs-dist/types/src/display/api';
+import { askQuestionWithContext, summarizeText } from '@/api/GPT';
 
-const FileDisplay = ({ id }: { id: string }) => {
+interface FileDisplayProps {
+  params: Promise<{ id: string }>; // `params` is a Promise in Next.js App Router
+}
+
+const FileDisplay = ({ params }: FileDisplayProps) => {
   const [pdfBlob, setPdfBlob] = useState<Blob | null>(null);
   const [pdfText, setPdfText] = useState<string>('');
   const [summary, setSummary] = useState<string | null>(null);
+  const [chatHistory, setChatHistory] = useState<{ user: string; assistant: string }[]>([]);
+  const [question, setQuestion] = useState<string>('');
+
+  const {id} = use(params)
 
   useEffect(() => {
     const fetchPdf = async () => {
@@ -49,14 +58,60 @@ const FileDisplay = ({ id }: { id: string }) => {
     }
   };
 
+  const handleQuestionSubmit = async () => {
+    if (!question.trim()) return;
+    setChatHistory((prev) => [...prev, { user: question, assistant: '' }]);
+
+    try {
+      const response = await askQuestionWithContext(question, summary ?? '', pdfText);
+      setChatHistory((prev) =>
+        prev.map((chat, index) =>
+          index === prev.length - 1 ? { ...chat, assistant: response } : chat
+        )
+      );
+    } catch (error) {
+      console.error('Error asking question:', error);
+    }
+    setQuestion('');
+  };
+
   return (
-    <div style={{ display: 'flex' }}>
-      <div style={{ flex: 3 }}>
+    <div style={containerStyle}>
+      <div style={pdfViewerStyle}>
         {pdfBlob ? <PDFViewer pdfBlob={pdfBlob} /> : <p>Loading PDF...</p>}
       </div>
-      <ChatWindow pdfText={pdfText} summary={summary} onSummarize={handleSummarize} />
+      <div style={sidebarStyle}>
+        {pdfBlob ? <PDFViewer pdfBlob={pdfBlob} /> : <p>Loading PDF...</p>}
+      </div>
+      {pdfBlob && 
+        <ChatWindow 
+          summary={summary} 
+          onSummarize={handleSummarize} 
+          onSubmitQuestion={handleQuestionSubmit}
+          chatHistory={chatHistory}
+          onUpdateQuestion={value => setQuestion(value)}
+        />}
     </div>
   );
+};
+
+const containerStyle: React.CSSProperties = {
+  display: 'flex',
+  width: '100%',
+  height: '100vh', // Full viewport height
+};
+
+const pdfViewerStyle: React.CSSProperties = {
+  flex: 4,
+  padding: '10px',
+  overflow: 'auto',
+};
+
+const sidebarStyle: React.CSSProperties = {
+  flex: 1,
+  padding: '10px',
+  borderLeft: '1px solid #ddd',
+  backgroundColor: '#f8f9fa', // Light background for sidebar
 };
 
 export default FileDisplay;

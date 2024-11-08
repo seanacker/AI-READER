@@ -51,21 +51,5 @@ export async function saveFile(fileData: Uint8Array, fileName: string): Promise<
     return data.id; // Assuming response contains the saved file's ID
   }
 
-export async function summarizeText (pdfText: string) {
-const response = await fetch("https://api.openai.com/v1/completions", {
-    method: "POST",
-    headers: {
-    "Content-Type": "application/json",
-    "Authorization": `Bearer ${process.env.OPENAI_API_KEY}`
-    },
-    body: JSON.stringify({
-    model: "gpt-4",
-    prompt: `Please provide a summary of the following text:\n\n${pdfText}`,
-    max_tokens: 150,
-    temperature: 0.5
-    })
-});
-
-const data = await response.json();
-return data.choices[0].text.trim();
-};
+ 
+  
