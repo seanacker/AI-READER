@@ -1,5 +1,6 @@
 import React from 'react';
 import ChatInput from '../ChatInput/ChatInput';
+import './style.css'
 
 interface ChatWindowProps {
   summary: string | null;
@@ -12,16 +13,21 @@ interface ChatWindowProps {
 
 const ChatWindow: React.FC<ChatWindowProps> = ({ summary, onSummarize, onSubmitQuestion, onUpdateQuestion, chatHistory, question }) => {
   return (
-    <div style={{ width: '300px', padding: '10px', borderLeft: '1px solid #ddd' }}>
-      <h3>Document Summary</h3>
-      <button onClick={onSummarize}>Summarize Document</button>
-      {summary ? (
-        <p>{summary}</p>
-      ) : (
-        <p>Summary will appear here after summarization.</p>
-      )}
-      <ChatInput onSubmitQuestion={onSubmitQuestion} onUpdateQuestion={onUpdateQuestion} chatHistory={chatHistory} question={question}/>
-    </div>
+<div style={{ padding: '10px', borderLeft: '1px solid #ddd' }}>
+  <h3>Document Summary</h3>
+  <button onClick={onSummarize} className="summarize-button">Summarize Document</button>
+  {summary ? (
+    <p className="summary-content">{summary}</p>
+  ) : (
+    <p>Summary will appear here after summarization.</p>
+  )}
+  <ChatInput
+    onSubmitQuestion={onSubmitQuestion}
+    onUpdateQuestion={onUpdateQuestion}
+    chatHistory={chatHistory}
+    question={question}
+  />
+</div>
   );
 };
 

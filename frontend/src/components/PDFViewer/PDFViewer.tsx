@@ -3,60 +3,47 @@
 import React, { useEffect, useRef } from 'react';
 import * as pdfjsLib from 'pdfjs-dist';
 
-interface PDFViewerProps {
+type PDFViewerProps = {
   pdfBlob: Blob;
 }
 
 // Set workerSrc to the location in the public directory
 pdfjsLib.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.mjs';
 
-const PDFViewer = ({ pdfBlob }: PDFViewerProps) => {
-  const pdfContainerRef = useRef<HTMLDivElement | null>(null);
+const PDFViewer: React.FC<PDFViewerProps> = ({ pdfBlob }) => {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
-    const loadPdf = async () => {
-      if (!pdfBlob) return;
+    const renderPDF = async () => {
+      const pdfData = new Uint8Array(await pdfBlob.arrayBuffer());
+      const pdf = await pdfjsLib.getDocument({ data: pdfData }).promise;
+      const page = await pdf.getPage(1);
 
-      try {
-        const pdfDataUrl = URL.createObjectURL(pdfBlob);
-        const loadingTask = pdfjsLib.getDocument(pdfDataUrl);
-        const pdf = await loadingTask.promise;
+      const canvas = canvasRef.current;
+      if (canvas) {
+        const context = canvas.getContext('2d');
+        const viewport = page.getViewport({ scale: 1 });
 
-        for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
-          const page = await pdf.getPage(pageNum);
-          const scale = 1.5;
-          const viewport = page.getViewport({ scale });
+        const scale = canvas.parentElement!.clientWidth / viewport.width;
+        const scaledViewport = page.getViewport({ scale });
 
-          const canvas = document.createElement('canvas');
-          const context = canvas.getContext('2d');
-          if (!context || !pdfContainerRef.current) return;
+        canvas.width = scaledViewport.width;
+        canvas.height = scaledViewport.height;
 
-          canvas.width = viewport.width;
-          canvas.height = viewport.height;
-          pdfContainerRef.current.appendChild(canvas);
-
+        if (context) {
           const renderContext = {
             canvasContext: context,
-            viewport: viewport,
+            viewport: scaledViewport,
           };
-          await page.render(renderContext).promise;
+          page.render(renderContext);
         }
-
-        URL.revokeObjectURL(pdfDataUrl);
-      } catch (error) {
-        console.error('Error loading PDF:', error);
       }
     };
 
-    loadPdf();
+    renderPDF();
   }, [pdfBlob]);
 
-  return (
-    <div>
-      <h3>PDF Document</h3>
-      <div ref={pdfContainerRef}/>
-    </div>
-  );
+  return <canvas ref={canvasRef} style={{ width: '100%', height: 'auto' }} />;
 };
 
 export default PDFViewer;

@@ -1,0 +1,33 @@
+
+  
+  /* Document Summary Section */
+  .summary-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  
+  .summarize-button {
+    background-color: #0070f3;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 8px 12px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+  }
+  
+  .summarize-button:hover {
+    background-color: #005bb5;
+  }
+  
+  .summary-content {
+    max-height: 30vh;
+    background-color: #eaf4ff;
+    padding: 15px;
+    border-radius: 8px;
+    font-size: 14px;
+    color: #005bb5;
+    margin-top: 10px;
+  }
+  

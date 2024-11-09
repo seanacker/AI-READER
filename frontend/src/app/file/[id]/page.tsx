@@ -1,12 +1,13 @@
 'use client'
 
-import React, { use, useEffect, useState } from 'react';
+import React, { use, useEffect, useRef, useState } from 'react';
 import { getFileById, getSummaryFromDB, saveSummaryToDB } from '@/api/DB';
 import PDFViewer from '@/components/PDFViewer/PDFViewer';
 import ChatWindow from '@/components/ChatWindow/ChatWindow';
 import * as pdfjsLib from 'pdfjs-dist';
 import { TextItem } from 'pdfjs-dist/types/src/display/api';
 import { askQuestionWithContext, summarizeText } from '@/api/GPT';
+import './style.css'
 
 interface FileDisplayProps {
   params: Promise<{ id: string }>; // `params` is a Promise in Next.js App Router
@@ -18,6 +19,8 @@ const FileDisplay = ({ params }: FileDisplayProps) => {
   const [summary, setSummary] = useState<string | null>(null);
   const [chatHistory, setChatHistory] = useState<{ user: string; assistant: string }[]>([]);
   const [question, setQuestion] = useState<string>('');
+  const [chatWidth, setChatWidth] = useState(300);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   const {id} = use(params)
 
@@ -47,6 +50,24 @@ const FileDisplay = ({ params }: FileDisplayProps) => {
     fetchPdf();
     fetchSummary();
   }, [id]);
+
+  const handleMouseDown = (event: React.MouseEvent) => {
+    const startX = event.clientX;
+    const startWidth = chatWidth;
+
+    const handleMouseMove = (moveEvent: MouseEvent) => {
+      const newWidth = startWidth + (startX - moveEvent.clientX);
+      setChatWidth(Math.max(200, Math.min(newWidth, window.innerWidth - 200)));
+    };
+
+    const handleMouseUp = () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
+    };
+
+    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('mouseup', handleMouseUp);
+  };
 
   const extractTextFromPDF = async (blob: Blob) => {
     const pdfData = new Uint8Array(await blob.arrayBuffer());
@@ -90,22 +111,26 @@ const FileDisplay = ({ params }: FileDisplayProps) => {
   };
 
   return (
-    <div style={containerStyle}>
-      <div style={pdfViewerStyle}>
+    <div style={containerStyle} ref={containerRef}>
+      <div style={pdfViewerStyle }>
         {pdfBlob ? <PDFViewer pdfBlob={pdfBlob} /> : <p>Loading PDF...</p>}
       </div>
-      <div style={sidebarStyle}>
-        {pdfBlob ? <PDFViewer pdfBlob={pdfBlob} /> : <p>Loading PDF...</p>}
+      <div
+        className="resizable-chat"
+        style={{ width: `${chatWidth}px` }}
+      >
+        <div className="resize-handle" onMouseDown={handleMouseDown} />
+        {pdfBlob && (
+          <ChatWindow
+            summary={summary}
+            onSummarize={handleSummarize}
+            onSubmitQuestion={handleQuestionSubmit}
+            chatHistory={chatHistory}
+            onUpdateQuestion={(value) => setQuestion(value)}
+            question={question}
+          />
+        )}
       </div>
-      {pdfBlob && 
-        <ChatWindow 
-          summary={summary} 
-          onSummarize={handleSummarize} 
-          onSubmitQuestion={handleQuestionSubmit}
-          chatHistory={chatHistory}
-          onUpdateQuestion={value => setQuestion(value)}
-          question={question}
-        />}
     </div>
   );
 };
@@ -120,13 +145,6 @@ const pdfViewerStyle: React.CSSProperties = {
   flex: 4,
   padding: '10px',
   overflow: 'auto',
-};
-
-const sidebarStyle: React.CSSProperties = {
-  flex: 1,
-  padding: '10px',
-  borderLeft: '1px solid #ddd',
-  backgroundColor: '#f8f9fa', // Light background for sidebar
 };
 
 export default FileDisplay;

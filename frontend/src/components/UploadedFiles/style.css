@@ -1,0 +1,70 @@
+/* Files container */
+.files-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+    height: 100%;
+    min-width: 200px;
+    margin-left: 50px;
+  }
+  
+  /* File card styling */
+  .file-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background-color: #ffffff;
+    border-radius: 12px;
+    padding: 15px 20px;
+    width: 100%;
+    max-width: 500px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+  }
+  
+  .file-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+  }
+  
+  /* File name styling */
+  .file-name {
+    font-size: 18px;
+    color: #333;
+    margin-right: auto;
+  }
+  
+  /* No files message */
+  .no-files {
+    font-size: 18px;
+    color: #888;
+  }
+  
+  /* View button styling */
+  .view-button {
+    background-color: #0070f3;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 8px 12px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background-color 0.3s ease;
+  }
+  
+  .view-button:hover {
+    background-color: #005bb5;
+  }
+  
+  .view-button:disabled {
+    background-color: #cccccc;
+    cursor: not-allowed;
+  }
+  
+  /* Responsive design */
+  @media (max-width: 600px) {
+    .file-card {
+      width: 90%;
+    }
+  }

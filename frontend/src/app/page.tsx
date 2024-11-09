@@ -4,6 +4,7 @@ import { getAllFiles } from "@/api/DB";
 import FileUpload from "@/components/FileUpload/FileUpload";
 import {UploadedFiles} from "@/components/UploadedFiles/UploadedFiles";
 import { useEffect, useState } from "react";
+import '../../public/general.css'
 
 export default function Home() {
   const [files, setFiles] = useState<{id: string, name: string}[]>([]);
@@ -22,7 +23,7 @@ export default function Home() {
     setFiles(prevIds => [...prevIds, {id, name}]);
 };
   return (
-    <div>
+    <div className="flex-box landing-page-wrapper">
       <FileUpload onFileAdded={onFileAdded}/>
       <UploadedFiles files={files}/>
     </div>

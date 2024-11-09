@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { saveFile } from '@/api/DB';
+import './style.css'
 
 type FileUploadProps = {
   onFileAdded: (id: string, name: string) => void;
@@ -42,11 +43,12 @@ const FileUpload: React.FC<FileUploadProps> = ({ onFileAdded }) => {
   }
 
   return (
-    <div>
-      <input type="file" onChange={handleFileUpload} accept="application/pdf" />
-      <input type="text" placeholder="File name" onChange={(e) => setFileName(e.target.value)} />
-      {file && <p>Uploaded File: {file.name}</p>}
-      {fileData && file?.name && <button onClick={onSaveFile}>Save</button>}
+    <div className="container">
+      <div className="card">
+        <input type="file" onChange={handleFileUpload} accept="application/pdf" className="file-input"/>
+        <input type="text" placeholder="File name" onChange={(e) => setFileName(e.target.value)} className="text-input"/>
+        {fileData && file?.name && <button onClick={onSaveFile} className="upload-button" disabled={!file.name || !fileData}>Save</button>}
+      </div>
     </div>
   );
 };
