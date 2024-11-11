@@ -10,14 +10,17 @@ const db = new sqlite3.Database('./pdf_data.db', (err) => {
     // Create a table if it doesn’t exist
     db.run(`CREATE TABLE IF NOT EXISTS pdf_data (
       id TEXT PRIMARY KEY,
-      file_name TEXT NOT NULL,
-      content BLOB NOT NULL
+      file_name TEXT NOT NULL
     );`)
 
-    db.run(`CREATE TABLE IF NOT EXISTS summaries (
+    db.run(`CREATE TABLE IF NOT EXISTS chapters (
       id TEXT PRIMARY KEY,
+      pdf_id TEXT,
+      file_name TEXT NOT NULL,
+      title TEXT,
+      content BLOB NOT NULL,
       summary TEXT,
-      chat_history TEXT
+      FOREIGN KEY (pdf_id) REFERENCES pdf_data(id)
     );`);
   }
 })

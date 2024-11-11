@@ -9,19 +9,51 @@ app.use(express.json());
 app.use(cors({ origin: 'http://localhost:3000' }))
 app.use(express.raw({ type: 'application/octet-stream', limit: '10mb' }))
 
-app.post('/text-file', (req, res) => {
-  const fileData = req.body
-  const fileName = decodeURIComponent(req.headers['x-file-name'])
-  const id = uuidv4()
+app.post('/text-file', async (req, res) => {
+  const { fileName, chapters } = req.body;
+  const pdfId = uuidv4();
 
-  db.run('INSERT INTO pdf_data (id, file_name, content) VALUES (?, ?, ?)', [id, fileName, fileData], function (err) {
-    if (err) {
-      console.error('Database Error:', err.message)
-      return res.status(500).json({ error: 'Failed to save data' })
-    }
-    res.status(200).json({ id })
-  })
-})
+  if (!chapters || chapters.length === 0) {
+    return res.status(400).json({ error: 'No chapters provided' });
+  }
+
+  try {
+    // Insert the file metadata
+    await new Promise((resolve, reject) => {
+      db.run('INSERT INTO pdf_data (id, file_name) VALUES (?, ?)', [pdfId, fileName], function (err) {
+        if (err) {
+          console.error('Database Error:', err.message);
+          reject(err);
+        } else {
+          resolve();
+        }
+      });
+    });
+
+    // Insert chapters into the database
+    const insertStmt = db.prepare(`
+      INSERT INTO chapters (id, pdf_id, title, content)
+      VALUES (?, ?, ?, ?)
+    `);
+
+    chapters.forEach((chapter, index) => {
+      const chapterId = uuidv4();
+      insertStmt.run(
+        chapterId,
+        pdfId,
+        chapter.chapterTitle || null,
+        Buffer.from(chapter.content, 'base64') // Decode from Base64 to binary
+      );
+    });
+
+    insertStmt.finalize();
+    res.status(200).json({ id: pdfId });
+
+  } catch (error) {
+    console.error('Error saving chapters:', error.message);
+    res.status(500).json({ error: 'Failed to save chapters' });
+  }
+});
 
 app.get('/text-files', (_, res) => {
   db.all('SELECT id, file_name FROM pdf_data', [], (err, rows) => {
@@ -37,10 +69,10 @@ app.get('/text-files', (_, res) => {
   })
 })
 
-app.get('/text-file/:id', (req, res) => {
-  const { id } = req.params
+app.get('/chapters/:pdfID', (req, res) => {
+  const { pdfID } = req.params
 
-  db.get('SELECT file_name, content FROM pdf_data WHERE id = ?', [id], (err, row) => {
+  db.get('SELECT file_name, chapter_number, chapter_title, content, summary FROM pdf_data WHERE pdf_id = ?', [pdfID], (err, row) => {
     if (err) {
       return res.status(500).json({ error: 'Failed to retrieve data' })
     }

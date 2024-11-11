@@ -1,7 +1,7 @@
 'use client'
 
 import React, { use, useEffect, useRef, useState } from 'react';
-import { getFileById, getSummaryFromDB, saveSummaryToDB } from '@/api/DB';
+import { Chapter, getChapters, getSummaryFromDB, saveSummaryToDB } from '@/api/DB';
 import PDFViewer from '@/components/PDFViewer/PDFViewer';
 import ChatWindow from '@/components/ChatWindow/ChatWindow';
 import * as pdfjsLib from 'pdfjs-dist';
@@ -14,8 +14,8 @@ interface FileDisplayProps {
 }
 
 const FileDisplay = ({ params }: FileDisplayProps) => {
-  const [pdfBlob, setPdfBlob] = useState<Blob | null>(null);
-  const [pdfText, setPdfText] = useState<string>('');
+  // const [chapters, setChapters] = useState<Chapter[]>([])
+  // const [currentChapterIndex, setCurrentChapterIndex] = useState<number | null>(0)
   const [summary, setSummary] = useState<string | null>(null);
   const [chatHistory, setChatHistory] = useState<{ user: string; assistant: string }[]>([]);
   const [question, setQuestion] = useState<string>('');
@@ -27,9 +27,8 @@ const FileDisplay = ({ params }: FileDisplayProps) => {
   useEffect(() => {
     const fetchPdf = async () => {
       try {
-        const blob = await getFileById(id);
-        setPdfBlob(blob);
-        extractTextFromPDF(blob); // Extract text when PDF is loaded
+        const chapters = await getChapters(id);
+        setChapters(chapters);
       } catch (error) {
         console.error('Error fetching PDF:', error);
       }
@@ -69,29 +68,17 @@ const FileDisplay = ({ params }: FileDisplayProps) => {
     window.addEventListener('mouseup', handleMouseUp);
   };
 
-  const extractTextFromPDF = async (blob: Blob) => {
-    const pdfData = new Uint8Array(await blob.arrayBuffer());
-    const pdf = await pdfjsLib.getDocument({ data: pdfData }).promise;
-    let text = '';
 
-    for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
-      const page = await pdf.getPage(pageNum);
-      const content = await page.getTextContent();
-      text += content.items.map(item => (item as TextItem).str).join(' ') + '\n';
-    }
 
-    setPdfText(text); // Set extracted text for display and summarization
-  };
-
-  const handleSummarize = async () => {
-    try {
-      const summaryText = await summarizeText(pdfText);
-      setSummary(summaryText);
-      await saveSummaryToDB(id, summaryText, chatHistory);
-    } catch (error) {
-      console.error('Error generating summary:', error);
-    }
-  };
+  // const handleSummarize = async () => {
+  //   try {
+  //     const summaryText = await summarizeText(pdfText);
+  //     setSummary(summaryText);
+  //     await saveSummaryToDB(id, summaryText, chatHistory);
+  //   } catch (error) {
+  //     console.error('Error generating summary:', error);
+  //   }
+  // };
 
   const handleQuestionSubmit = async () => {
     if (!question.trim()) return;
